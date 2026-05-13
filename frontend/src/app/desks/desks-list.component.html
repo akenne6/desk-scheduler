@@ -1,0 +1,34 @@
+<mat-toolbar color="primary">
+  <span>Desk Scheduler</span>
+</mat-toolbar>
+
+<section class="page">
+  <h2>Desks</h2>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading desks"></mat-progress-bar>
+  } @else if (error()) {
+    <p class="error">Could not load desks: {{ error() }}</p>
+  } @else {
+    <div class="desk-grid">
+      @for (desk of desks(); track desk.id) {
+        <mat-card class="desk-card">
+          <mat-card-header>
+            <mat-card-title>{{ desk.name }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ desk.room.floor.name }} · {{ desk.room.name }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-chip-set>
+              <mat-chip>{{ desk.type }}</mat-chip>
+              <mat-chip [highlighted]="!!desk.occupiedBy">
+                {{ desk.occupiedBy ? desk.occupiedBy.employeeName : 'Available' }}
+              </mat-chip>
+            </mat-chip-set>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

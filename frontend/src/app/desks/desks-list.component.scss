@@ -1,0 +1,22 @@
+@use 'variables' as v;
+
+.page {
+  padding: v.$space-lg;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin: 0 0 v.$space-md;
+  color: v.$color-text;
+}
+
+.desk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: v.$space-md;
+}
+
+.error {
+  color: #b91c1c;
+}
