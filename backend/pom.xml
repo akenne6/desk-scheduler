@@ -23,6 +23,10 @@
              newer docker-java that handles Docker API negotiation correctly against modern
              Docker Desktop. Without this we hit "client version 1.32 is too old". -->
         <testcontainers.version>1.21.4</testcontainers.version>
+        <!-- Override Spring Boot 3.4.1's managed Lombok (1.18.36). 1.18.36 hits
+             "TypeTag :: UNKNOWN" on JDK 21.0.11+ because of a javac API change.
+             1.18.38 includes the compat shim. -->
+        <lombok.version>1.18.38</lombok.version>
     </properties>
 
     <dependencies>

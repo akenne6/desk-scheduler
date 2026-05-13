@@ -42,6 +42,9 @@ Authentication. Multiple buildings. Scheduled / future bookings (only "check in 
 ## Decisions
 _Append-only log of meaningful technical decisions and the reasoning behind them._
 
+- 2026-05-13 — **Lombok bumped to 1.18.38** (Spring Boot 3.4.1 manages 1.18.36). 1.18.36 hits `TypeTag :: UNKNOWN` on JDK 21.0.11+ because javac removed an internal enum value Lombok was reflecting against; 1.18.38 ships the compat shim. Override is one line in `<properties>` (`lombok.version`).
+- 2026-05-13 — **Unidirectional `@ManyToOne` only** on `Room → Floor` and `Desk → Room`. No reverse `@OneToMany` collections — Phase 1's endpoint returns a flat list of desks with `room → floor` inline; the parent→children direction has no consumer yet and would introduce fetch-strategy decisions for no gain.
+- 2026-05-13 — **Vlad-style id-based equals/hashCode** on JPA entities: `equals` returns false when `id == null` (transient entities aren't equal to each other), `hashCode` returns `getClass().hashCode()` (constant, survives the transient→managed identity assignment). Canonical pattern; safe in HashSets across persist boundaries.
 - 2026-05-13 — **Angular Material** chosen as the frontend component library. Standardizes look-and-feel without hand-rolling layout/dialog/list/table primitives; pairs with the shared SCSS tokens in `frontend/src/styles/_variables.scss` for theming. First use lands in Phase 1's desks-list page; first-time install via `ng add @angular/material`.
 - 2026-05-13 — **Lombok** added (`@Getter`, `@Setter`, `@RequiredArgsConstructor` for constructor injection). `lombok.config` enables `@lombok.Generated` so JaCoCo auto-excludes generated methods. Avoids hand-written boilerplate without giving up the "test core logic, not boilerplate" stance.
 - 2026-05-13 — **JaCoCo line-coverage threshold lowered 80% → 50%** and `**/dto/**` + `**/entity/**` excluded from the bundle. The remaining coverage signal applies to packages that actually have logic (services, controllers, mappers). Tighten the threshold later as the service layer grows.
@@ -59,6 +62,7 @@ _Things we haven't resolved. Move resolved ones into Decisions._
 ## Changelog
 _Short bullet per `/ship`, newest first. Format: `YYYY-MM-DD — <summary>`_
 
+- 2026-05-13 — Phase 1 checkpoint 2: JPA entities `Floor` / `Room` / `Desk` + `DeskType` enum + matching repositories. Unidirectional `@ManyToOne` from Room→Floor and Desk→Room (LAZY). Lombok bumped 1.18.36 → 1.18.38 to fix `TypeTag :: UNKNOWN` on JDK 21.0.11. Hibernate `ddl-auto=validate` confirms entity mappings line up with the V2 schema.
 - 2026-05-13 — Phase 1 checkpoint 1: Flyway `V2__core_tables.sql` adds `floors` / `rooms` / `desks` with a TEXT + CHECK constraint on `desks.type` (cleaner JPA mapping than a PG ENUM). Seeds 1 floor / 2 rooms / 6 desks for the demo. PLAN.md Current focus narrowed to Phase 1; Angular Material logged as the frontend component library.
 - 2026-05-13 — Phase 0: Lombok wired in (deps + annotation processor + `lombok.config`). JaCoCo threshold 80% → 50% and `dto`/`entity` packages excluded from the bundle. PLAN.md rewritten to reflect actual desk-scheduler scope, decisions, and phasing.
 - 2026-05-13 — Cloned from `claude-base-monorepo` template; ran the three-pass rename to `desk-scheduler`. `mvn verify` and `ng build` green on the rename.
