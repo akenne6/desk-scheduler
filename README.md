@@ -10,9 +10,9 @@ A monorepo template for Claude Code-driven development. Spring Boot 3.4 backend 
 backend/                       — Spring Boot 3.4 / Java 21 / Maven application
   pom.xml
   src/main/java/com/example/deskscheduler/
-  src/test/java/com/example/deskscheduler/             — unit tests (MockMvc)
+  src/test/java/com/example/deskscheduler/             — unit tests (Mockito + Spring Boot test slices)
   src/test/java/com/example/deskscheduler/integration/ — integration tests (@Tag("integration"), real HTTP)
-frontend/                      — Angular 19 application (placeholder until phase 3)
+frontend/                      — Angular 19 application (standalone components, Angular Material, SCSS shared tokens)
 .github/workflows/             — GitHub Actions: PR checks + integration tests on main
 .claude/                       — slash commands, hooks, project Claude Code settings
 scripts/                       — repo admin helpers (see CLAUDE.md "One-time setup")
@@ -39,7 +39,7 @@ mvn test -P integration-tests
 # Lint check (Spotless / Google Java Format AOSP)
 mvn spotless:check
 
-# Unit tests + coverage threshold (JaCoCo, 80% line coverage)
+# Unit tests + coverage threshold (JaCoCo, 50% line coverage)
 mvn verify
 
 # Run the application
@@ -60,7 +60,7 @@ npm run lint               # ESLint via @angular-eslint
 npm run format:check       # Prettier (auto-fix: npm run format)
 ```
 
-Frontend uses SCSS. Shared design tokens (colors, spacing, typography) live in `frontend/src/styles/_variables.scss`; components reuse them via `@use 'variables' as v;`. See [CLAUDE.md](CLAUDE.md) for the shared-styles convention.
+Frontend uses Angular Material (azure-blue M3 theme) on top of SCSS. Shared design tokens (colors, spacing, typography) live in `frontend/src/styles/_variables.scss`; components reuse them via `@use 'variables' as v;`. New components reach for Angular Material primitives (`MatCard`, `MatList`, `MatDialog`, etc.) before hand-rolling. See [CLAUDE.md](CLAUDE.md) for the shared-styles convention.
 
 ## Local database
 
@@ -78,14 +78,13 @@ Tests use Testcontainers to spin up Postgres on the fly, so `docker compose up` 
 
 | Method | Path | Description |
 |---|---|---|
+| GET | `/api/desks` | List all desks with their parent room/floor and current occupancy (`occupiedBy` is `null` until Phase 2). |
 | GET | `/actuator/health` | Spring Boot Actuator health endpoint. |
 | GET | `/swagger-ui.html` | Swagger UI: browse + try every endpoint from the browser. |
 | GET | `/v3/api-docs` | Raw OpenAPI 3 spec (JSON). |
 
-_No application endpoints yet — this scaffold is in workflow-setup phase._
-
 ## Development workflow
 
-This repo uses an opinionated 10-step workflow (`/plan-feature` → `/ship` → `/verify` → `/merge` → `/promote` → `/ultrareview` → `/address-review`) driven from Claude Code. See [CLAUDE.md](CLAUDE.md) for the full sequence, branch policy (main / develop / feature/*), and per-command details.
+This repo uses an opinionated 10-step workflow (`/plan-feature` → `/ship` → `/verify` → `/merge` → `/promote` → `/review` (default) or `/ultrareview` (escalation) → `/address-review`) driven from Claude Code. See [CLAUDE.md](CLAUDE.md) for the full sequence, branch policy (main / develop / feature/*), and per-command details.
 
-Backend quality gates: Spotless (formatting), JaCoCo (80% line coverage), security review on diff. Frontend quality gates: Prettier (formatting), `ng lint` / ESLint (style + quality), `ng test` (unit tests). Both stacks run in parallel via GitHub Actions on every PR to `develop` or `main`.
+Backend quality gates: Spotless (formatting), JaCoCo (50% line coverage), security review on diff. Frontend quality gates: Prettier (formatting), `ng lint` / ESLint (style + quality), `ng test` (unit tests). Both stacks run in parallel via GitHub Actions on every PR to `develop` or `main`.
