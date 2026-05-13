@@ -42,6 +42,9 @@ Authentication. Multiple buildings. Scheduled / future bookings (only "check in 
 ## Decisions
 _Append-only log of meaningful technical decisions and the reasoning behind them._
 
+- 2026-05-13 — **CORS via `@CrossOrigin("http://localhost:4200")` on `DeskController`** for Phase 1. With a single controller, the annotation is the cheapest tool — refactor to a global `WebMvcConfigurer` when Phase 2 adds the booking controller. Resolves the prior Open Question.
+- 2026-05-13 — **No-N+1 via `JOIN FETCH d.room r JOIN FETCH r.floor`** in `DeskRepository.findAllWithRoomAndFloor()`. The DTO mapping always traverses `desk → room → floor`, so eager fetching in the query is the right tradeoff over per-call `@EntityGraph` annotations.
+- 2026-05-13 — **Inline `static from(entity)` factories on DTO records**, no separate Mapper class. Single consumer per DTO; mapping is 3-4 lines. Add a mapper layer if Phase 2 grows a second consumer.
 - 2026-05-13 — **Lombok bumped to 1.18.38** (Spring Boot 3.4.1 manages 1.18.36). 1.18.36 hits `TypeTag :: UNKNOWN` on JDK 21.0.11+ because javac removed an internal enum value Lombok was reflecting against; 1.18.38 ships the compat shim. Override is one line in `<properties>` (`lombok.version`).
 - 2026-05-13 — **Unidirectional `@ManyToOne` only** on `Room → Floor` and `Desk → Room`. No reverse `@OneToMany` collections — Phase 1's endpoint returns a flat list of desks with `room → floor` inline; the parent→children direction has no consumer yet and would introduce fetch-strategy decisions for no gain.
 - 2026-05-13 — **Vlad-style id-based equals/hashCode** on JPA entities: `equals` returns false when `id == null` (transient entities aren't equal to each other), `hashCode` returns `getClass().hashCode()` (constant, survives the transient→managed identity assignment). Canonical pattern; safe in HashSets across persist boundaries.
@@ -57,11 +60,11 @@ _Append-only log of meaningful technical decisions and the reasoning behind them
 _Things we haven't resolved. Move resolved ones into Decisions._
 
 - HTTP method for check-out: `PATCH /api/bookings/{id}/checkout` vs. `POST /api/bookings/{id}/checkout`. Picking PATCH in Phase 2 unless we hit a reason to switch.
-- CORS: need to verify Phase 1 controller allows the Angular dev server (`localhost:4200`) before Phase 2 frontend work — likely a `@CrossOrigin` on the controller or a `WebMvcConfigurer`.
 
 ## Changelog
 _Short bullet per `/ship`, newest first. Format: `YYYY-MM-DD — <summary>`_
 
+- 2026-05-13 — Phase 1 checkpoint 3: `GET /api/desks` end-to-end. DTO records (`FloorSummary`, `RoomSummary`, `OccupiedBy`, `DeskResponse` with `occupiedBy=null`), `DeskService` with `@Transactional(readOnly=true)`, `DeskController` with full OpenAPI annotations + `@CrossOrigin` for `localhost:4200`. `DeskRepository.findAllWithRoomAndFloor()` uses `JOIN FETCH` to avoid N+1. Tests: service unit test + integration test asserting 6 seeded desks. `mvn verify` green (incl. JaCoCo coverage gate); `mvn test -P integration-tests` green.
 - 2026-05-13 — Phase 1 checkpoint 2: JPA entities `Floor` / `Room` / `Desk` + `DeskType` enum + matching repositories. Unidirectional `@ManyToOne` from Room→Floor and Desk→Room (LAZY). Lombok bumped 1.18.36 → 1.18.38 to fix `TypeTag :: UNKNOWN` on JDK 21.0.11. Hibernate `ddl-auto=validate` confirms entity mappings line up with the V2 schema.
 - 2026-05-13 — Phase 1 checkpoint 1: Flyway `V2__core_tables.sql` adds `floors` / `rooms` / `desks` with a TEXT + CHECK constraint on `desks.type` (cleaner JPA mapping than a PG ENUM). Seeds 1 floor / 2 rooms / 6 desks for the demo. PLAN.md Current focus narrowed to Phase 1; Angular Material logged as the frontend component library.
 - 2026-05-13 — Phase 0: Lombok wired in (deps + annotation processor + `lombok.config`). JaCoCo threshold 80% → 50% and `dto`/`entity` packages excluded from the bundle. PLAN.md rewritten to reflect actual desk-scheduler scope, decisions, and phasing.
