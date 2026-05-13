@@ -4,22 +4,59 @@
 > Updated by `/ship` and by hand. Newest entries at the top of each section.
 
 ## Current focus
-This repo is now the `desk-scheduler` template — a snapshot of the workflow + scaffolding intended as a starting point for future projects. New projects branch off this state and rename via the recipe in [CLAUDE.md](CLAUDE.md) → "Renaming for a new project". Future work in *this* repo is improvements to the template itself.
+A Web API + minimal Angular GUI to manage desk seating within a single building. The 1-hour MVP delivers a resource tree (Floor → Room → Desk), employee check-in/check-out against desks, and an availability view. Phases 1 and 2 are the commit; Phase 3 is stretch. Each phase ships a thin vertical slice (DB + backend + frontend) so any subset is demo-able.
+
+## Goals (in scope for the hour)
+1. Track floors, rooms, and desks with type metadata (standard / standing / conference).
+2. Assign an employee to a desk via check-in, finalize via check-out — both server-stamped timestamps.
+3. List desks with their current occupancy (`occupiedBy: null` or `{ employeeName, checkedInAt }`).
+4. Filter to available desks. **Stretch:** search by employee name or desk type.
+
+## Out of scope (cut to fit the hour)
+Authentication. Multiple buildings. Scheduled / future bookings (only "check in now"). Capacity/equipment metadata. Real-time updates. Pagination. Audit log. Employee profiles (free-text names only).
+
+## Phases
+
+### Phase 1 — Backbone (~20 min): "I can see desks"
+- Flyway `V1__core_tables.sql` — `floors`, `rooms`, `desks` (with `desks.type` enum). Seed 1 floor / 2 rooms / 6 desks for demo.
+- JPA entities (Lombok `@Getter`/`@Setter` + custom equals/hashCode on id) + repositories.
+- DTO records: `FloorSummary`, `RoomSummary`, `DeskResponse` (initially with `occupiedBy: null`).
+- `GET /api/desks` controller + service. OpenAPI annotations per CLAUDE.md.
+- Angular component listing desks with the shared SCSS tokens.
+- Tests: 1 service-layer unit test + 1 integration test hitting the endpoint.
+
+**Exit:** `mvn verify` green, `ng build` green, list page renders the seeded desks.
+
+### Phase 2 — Check-in + check-out (~25 min): "I can claim and release a desk"
+- Flyway `V2__bookings.sql` — `bookings(id, desk_id FK, employee_name, checked_in_at, checked_out_at NULL)` + **partial unique index** `(desk_id) WHERE checked_out_at IS NULL`. The DB enforces "one active booking per desk"; concurrent check-in races become 23505 → mapped to 409.
+- `BookingService` with `POST /api/bookings` (check-in) and `PATCH /api/bookings/{id}/checkout`.
+- `GET /api/desks` returns `occupiedBy` via a **JPQL projection query** that left-joins bookings filtered by `checked_out_at IS NULL` — explicit join in the query, no `@Where`/`@Formula` magic.
+- `@ControllerAdvice` mapping the common errors (entity-not-found → 404, constraint violation → 409, bean-validation → 400).
+- Frontend: click a desk → modal for employee name → POST /api/bookings. Show "Check out" button on occupied desks.
+- Tests: BookingService happy path + a test that a second POST returns 409 + a check-out test.
+
+### Phase 3 — Filter + optional search (~15 min, stretch)
+- `GET /api/desks?available=true` filter + a frontend toggle for available-only.
+- **If time:** `?employee=<name>` (Postgres `ILIKE '%name%'`) and `?type=<type>` (equality). Note: leading-wildcard ILIKE skips the BTREE index; fine for demo, future fix is `pg_trgm` GIN.
 
 ## Decisions
 _Append-only log of meaningful technical decisions and the reasoning behind them._
 
-- _(none yet — workflow tooling is the only completed work so far)_
+- 2026-05-13 — **Lombok** added (`@Getter`, `@Setter`, `@RequiredArgsConstructor` for constructor injection). `lombok.config` enables `@lombok.Generated` so JaCoCo auto-excludes generated methods. Avoids hand-written boilerplate without giving up the "test core logic, not boilerplate" stance.
+- 2026-05-13 — **JaCoCo line-coverage threshold lowered 80% → 50%** and `**/dto/**` + `**/entity/**` excluded from the bundle. The remaining coverage signal applies to packages that actually have logic (services, controllers, mappers). Tighten the threshold later as the service layer grows.
+- 2026-05-13 — **Employee modeled as a free-text `employee_name` column on `bookings`**, not a separate `employees` table. Two bookings under "Alice Johnson" and "alice johnson" are different people in this model — acceptable for the 1-hour MVP; extract to its own entity when adding auth or profiles.
+- 2026-05-13 — **Bookings as a separate entity, not a state column on `desks`.** Enables history and scheduled bookings without schema rewrite.
+- 2026-05-13 — **Concurrency-safe assignment via Postgres partial unique index** `(desk_id) WHERE checked_out_at IS NULL` rather than application-level locking. DB is the source of truth; app code can be naive and still correct.
+- 2026-05-13 — **`occupiedBy` computed via JPQL projection** (`LEFT JOIN bookings WHERE checked_out_at IS NULL`), not a JPA relationship + `@Where`. The relationship would have to "switch identity" as bookings come and go, which is awkward in Hibernate; the projection is explicit and indexable.
 
 ## Open questions
 _Things we haven't resolved. Move resolved ones into Decisions._
 
-- _(none yet)_
+- HTTP method for check-out: `PATCH /api/bookings/{id}/checkout` vs. `POST /api/bookings/{id}/checkout`. Picking PATCH in Phase 2 unless we hit a reason to switch.
+- CORS: need to verify Phase 1 controller allows the Angular dev server (`localhost:4200`) before Phase 2 frontend work — likely a `@CrossOrigin` on the controller or a `WebMvcConfigurer`.
 
 ## Changelog
 _Short bullet per `/ship`, newest first. Format: `YYYY-MM-DD — <summary>`_
 
-- 2026-05-13 — Swapped `/ultrareview` out of the default flow for a new repo-local `/review` slash command that runs in-conversation and posts the review to the PR as a review comment (no cloud-side billing). `/ultrareview` retained in the per-step table as an escalation option. CLAUDE.md workflow step 8, command reference table, and `/address-review` description updated accordingly.
-- 2026-05-13 — Added `scripts/enable-required-pr-checks.sh` (genericized via `gh repo view`) to set `PR checks / backend` and `PR checks / frontend` as required status checks on `main`. Fixes a CLAUDE.md reference to a non-existent `PR checks / checks` context.
-- 2026-05-13 — Bumped CI to Node 24 (Node 20 hit maintenance EOL April 2026); regenerated `frontend/package-lock.json` under npm 11 to match.
-- 2026-05-13 — Established v2 workflow tooling: slash commands (`/plan-feature`, `/ship`, `/verify`, `/merge`, `/integration-verify`, `/promote`, `/address-review`, `/quickfix`), Spotless lint (Google Java Format AOSP), JaCoCo coverage check at 80%, `integration-tests` Maven profile, README.md. Workflow shared via `.claude/` (commands, hook script, project settings.json); `.claude/settings.local.json` stays gitignored.
+- 2026-05-13 — Phase 0: Lombok wired in (deps + annotation processor + `lombok.config`). JaCoCo threshold 80% → 50% and `dto`/`entity` packages excluded from the bundle. PLAN.md rewritten to reflect actual desk-scheduler scope, decisions, and phasing.
+- 2026-05-13 — Cloned from `claude-base-monorepo` template; ran the three-pass rename to `desk-scheduler`. `mvn verify` and `ng build` green on the rename.
