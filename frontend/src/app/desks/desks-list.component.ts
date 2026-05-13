@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -26,7 +27,7 @@ export class DesksListComponent implements OnInit {
         this.desks.set(desks);
         this.loading.set(false);
       },
-      error: (err: Error) => {
+      error: (err: HttpErrorResponse) => {
         this.error.set(err.message ?? 'Unknown error');
         this.loading.set(false);
       },
