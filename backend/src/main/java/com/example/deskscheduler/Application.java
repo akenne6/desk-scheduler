@@ -1,4 +1,4 @@
-package com.example.claudebasemonorepo;
+package com.example.deskscheduler;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.example.claudebasemonorepo;
+package com.example.deskscheduler;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

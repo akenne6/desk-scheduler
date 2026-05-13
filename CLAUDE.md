@@ -1,21 +1,21 @@
-# claude-base-monorepo
+# desk-scheduler
 
 Monorepo: Spring Boot 3.4 / Java 21 / Maven backend at `backend/`, Angular 19 frontend at `frontend/` (scaffolded in phase 3). No Maven wrapper — use system `mvn`.
 
 ## Renaming for a new project
 
-This repo is a base template. The project name `claude-base-monorepo` appears in three forms; renaming a new project is three find/replace passes plus a directory rename.
+This repo is a base template. The project name `desk-scheduler` appears in three forms; renaming a new project is three find/replace passes plus a directory rename.
 
 | Pattern | Replace with | Where it appears |
 |---|---|---|
-| `claude-base-monorepo` | `your-new-project` (kebab) | `backend/pom.xml` (`<artifactId>`, `<name>`), `backend/src/main/resources/application.properties` (`spring.application.name`), `docker-compose.yml` (`container_name`), `README.md` title, this file's title, `.vscode/launch.json` (`projectName`) |
-| `claude_base_monorepo` | `your_new_project` (snake) | `application.properties` (DB URL default + user + password), `docker-compose.yml` (`POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` / healthcheck) |
-| `claudebasemonorepo` | `yournewproject` (single token) | All Java package declarations and the directory `backend/src/main/java/com/example/claudebasemonorepo/` (plus the test mirror under `backend/src/test/java/...`). After the find/replace, rename the directory to match. |
+| `desk-scheduler` | `your-new-project` (kebab) | `backend/pom.xml` (`<artifactId>`, `<name>`), `backend/src/main/resources/application.properties` (`spring.application.name`), `docker-compose.yml` (`container_name`), `README.md` title, this file's title, `.vscode/launch.json` (`projectName`) |
+| `desk_scheduler` | `your_new_project` (snake) | `application.properties` (DB URL default + user + password), `docker-compose.yml` (`POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` / healthcheck) |
+| `deskscheduler` | `yournewproject` (single token) | All Java package declarations and the directory `backend/src/main/java/com/example/deskscheduler/` (plus the test mirror under `backend/src/test/java/...`). After the find/replace, rename the directory to match. |
 
 One-liner to find any stragglers after renaming:
 
 ```bash
-grep -rE "claude-base-monorepo|claude_base_monorepo|claudebasemonorepo" \
+grep -rE "desk-scheduler|desk_scheduler|deskscheduler" \
   --include="*.java" --include="*.xml" --include="*.properties" \
   --include="*.yml" --include="*.json" --include="*.md" .
 ```
@@ -42,8 +42,8 @@ PLAN.md, CLAUDE.md, README.md
 
 Coverage report after `mvn test` is at `backend/target/site/jacoco/index.html` (or `jacoco.csv` for parsing).
 
-Source layout: `backend/src/main/java/com/example/claudebasemonorepo/`, tests mirror under `backend/src/test/java/...`.
-Integration tests live in `backend/src/test/java/com/example/claudebasemonorepo/integration/` and are tagged `@Tag("integration")`. They use `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `TestRestTemplate` to hit endpoints over real HTTP. The `integration` tag is excluded from default `mvn test` runs (Surefire `<excludedGroups>` config in pom.xml) and is the sole group included by the `integration-tests` Maven profile.
+Source layout: `backend/src/main/java/com/example/deskscheduler/`, tests mirror under `backend/src/test/java/...`.
+Integration tests live in `backend/src/test/java/com/example/deskscheduler/integration/` and are tagged `@Tag("integration")`. They use `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `TestRestTemplate` to hit endpoints over real HTTP. The `integration` tag is excluded from default `mvn test` runs (Surefire `<excludedGroups>` config in pom.xml) and is the sole group included by the `integration-tests` Maven profile.
 
 ## Build & test (frontend, from `frontend/`)
 Angular 19, standalone components, no router yet, **SCSS** styling. First-time setup: `npm install`.
@@ -113,7 +113,7 @@ Postgres 16, accessed via Spring Data JPA. Local Postgres runs via `docker compo
 
 - **Connection config**: `backend/src/main/resources/application.properties` — env vars (`DB_URL`, `DB_USER`, `DB_PASSWORD`) with defaults matching `docker-compose.yml` for zero-config local dev.
 - **Migrations**: Flyway, files at `backend/src/main/resources/db/migration/`, naming `V<#>__<description>.sql` (two underscores). Flyway runs on Spring Boot startup; Hibernate `ddl-auto=validate` makes Flyway the sole schema source.
-- **Tests**: Testcontainers via `@ServiceConnection` (see [backend/src/test/java/com/example/claudebasemonorepo/TestcontainersConfig.java](backend/src/test/java/com/example/claudebasemonorepo/TestcontainersConfig.java)). Each `mvn verify` run spins up a fresh Postgres container — Docker must be running, but `docker compose up` is not required.
+- **Tests**: Testcontainers via `@ServiceConnection` (see [backend/src/test/java/com/example/deskscheduler/TestcontainersConfig.java](backend/src/test/java/com/example/deskscheduler/TestcontainersConfig.java)). Each `mvn verify` run spins up a fresh Postgres container — Docker must be running, but `docker compose up` is not required.
 
 ## Code style
 

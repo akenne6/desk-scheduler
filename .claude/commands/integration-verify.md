@@ -22,7 +22,7 @@ This activates a Surefire config that runs only tests tagged `@Tag("integration"
 ## 2. Handle results
 - **All pass**: report success with the count of tests run.
 - **Any fail**: stop. Surface the failing test names, the assertion / exception, and the relevant stack trace. Do not attempt to "fix" — integration test failures on a committed branch usually mean a real regression and warrant a bug-fix branch (workflow step 6), not silent edits here.
-- **No integration tests found**: report this clearly. Suggest creating one in `backend/src/test/java/com/example/claudebasemonorepo/integration/`.
+- **No integration tests found**: report this clearly. Suggest creating one in `backend/src/test/java/com/example/deskscheduler/integration/`.
 
 ## 3. Report
 End with a short summary:

@@ -4,7 +4,7 @@
 > Updated by `/ship` and by hand. Newest entries at the top of each section.
 
 ## Current focus
-This repo is now the `claude-base-monorepo` template — a snapshot of the workflow + scaffolding intended as a starting point for future projects. New projects branch off this state and rename via the recipe in [CLAUDE.md](CLAUDE.md) → "Renaming for a new project". Future work in *this* repo is improvements to the template itself.
+This repo is now the `desk-scheduler` template — a snapshot of the workflow + scaffolding intended as a starting point for future projects. New projects branch off this state and rename via the recipe in [CLAUDE.md](CLAUDE.md) → "Renaming for a new project". Future work in *this* repo is improvements to the template itself.
 
 ## Decisions
 _Append-only log of meaningful technical decisions and the reasoning behind them._

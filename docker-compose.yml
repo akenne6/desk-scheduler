@@ -1,17 +1,17 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: claude-base-monorepo-postgres
+    container_name: desk-scheduler-postgres
     environment:
-      POSTGRES_DB: claude_base_monorepo
-      POSTGRES_USER: claude_base_monorepo
-      POSTGRES_PASSWORD: claude_base_monorepo
+      POSTGRES_DB: desk_scheduler
+      POSTGRES_USER: desk_scheduler
+      POSTGRES_PASSWORD: desk_scheduler
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U claude_base_monorepo -d claude_base_monorepo"]
+      test: ["CMD-SHELL", "pg_isready -U desk_scheduler -d desk_scheduler"]
       interval: 5s
       timeout: 5s
       retries: 5
