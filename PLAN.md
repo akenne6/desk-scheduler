@@ -4,7 +4,7 @@
 > Updated by `/ship` and by hand. Newest entries at the top of each section.
 
 ## Current focus
-A Web API + minimal Angular GUI to manage desk seating within a single building. The 1-hour MVP delivers a resource tree (Floor → Room → Desk), employee check-in/check-out against desks, and an availability view. Phases 1 and 2 are the commit; Phase 3 is stretch. Each phase ships a thin vertical slice (DB + backend + frontend) so any subset is demo-able.
+**Phase 1 — Backbone** on `feature/phase-1-desks-backbone`. Ship the thin vertical slice: Flyway `V1__core_tables.sql` (floors/rooms/desks + seed), JPA entities + repositories, `GET /api/desks` returning the resource tree with `occupiedBy: null` placeholder, and an Angular Material desks-list page styled with the shared SCSS tokens. Exit gates: `mvn verify`, `mvn test -P integration-tests`, and `ng build` all green; seeded desks render in the browser. See **Phases → Phase 1** below for the full task list. Overall product context (the multi-phase desk-scheduler MVP) lives in **Goals** / **Out of scope** / **Phases**.
 
 ## Goals (in scope for the hour)
 1. Track floors, rooms, and desks with type metadata (standard / standing / conference).
@@ -18,7 +18,7 @@ Authentication. Multiple buildings. Scheduled / future bookings (only "check in 
 ## Phases
 
 ### Phase 1 — Backbone (~20 min): "I can see desks"
-- Flyway `V1__core_tables.sql` — `floors`, `rooms`, `desks` (with `desks.type` enum). Seed 1 floor / 2 rooms / 6 desks for demo.
+- Flyway `V2__core_tables.sql` — `floors`, `rooms`, `desks` (with `desks.type` as TEXT + CHECK constraint for clean JPA mapping). Seed 1 floor / 2 rooms / 6 desks for demo. (V1 is the Phase 0 baseline placeholder.)
 - JPA entities (Lombok `@Getter`/`@Setter` + custom equals/hashCode on id) + repositories.
 - DTO records: `FloorSummary`, `RoomSummary`, `DeskResponse` (initially with `occupiedBy: null`).
 - `GET /api/desks` controller + service. OpenAPI annotations per CLAUDE.md.
@@ -42,6 +42,7 @@ Authentication. Multiple buildings. Scheduled / future bookings (only "check in 
 ## Decisions
 _Append-only log of meaningful technical decisions and the reasoning behind them._
 
+- 2026-05-13 — **Angular Material** chosen as the frontend component library. Standardizes look-and-feel without hand-rolling layout/dialog/list/table primitives; pairs with the shared SCSS tokens in `frontend/src/styles/_variables.scss` for theming. First use lands in Phase 1's desks-list page; first-time install via `ng add @angular/material`.
 - 2026-05-13 — **Lombok** added (`@Getter`, `@Setter`, `@RequiredArgsConstructor` for constructor injection). `lombok.config` enables `@lombok.Generated` so JaCoCo auto-excludes generated methods. Avoids hand-written boilerplate without giving up the "test core logic, not boilerplate" stance.
 - 2026-05-13 — **JaCoCo line-coverage threshold lowered 80% → 50%** and `**/dto/**` + `**/entity/**` excluded from the bundle. The remaining coverage signal applies to packages that actually have logic (services, controllers, mappers). Tighten the threshold later as the service layer grows.
 - 2026-05-13 — **Employee modeled as a free-text `employee_name` column on `bookings`**, not a separate `employees` table. Two bookings under "Alice Johnson" and "alice johnson" are different people in this model — acceptable for the 1-hour MVP; extract to its own entity when adding auth or profiles.
@@ -58,5 +59,6 @@ _Things we haven't resolved. Move resolved ones into Decisions._
 ## Changelog
 _Short bullet per `/ship`, newest first. Format: `YYYY-MM-DD — <summary>`_
 
+- 2026-05-13 — Phase 1 checkpoint 1: Flyway `V2__core_tables.sql` adds `floors` / `rooms` / `desks` with a TEXT + CHECK constraint on `desks.type` (cleaner JPA mapping than a PG ENUM). Seeds 1 floor / 2 rooms / 6 desks for the demo. PLAN.md Current focus narrowed to Phase 1; Angular Material logged as the frontend component library.
 - 2026-05-13 — Phase 0: Lombok wired in (deps + annotation processor + `lombok.config`). JaCoCo threshold 80% → 50% and `dto`/`entity` packages excluded from the bundle. PLAN.md rewritten to reflect actual desk-scheduler scope, decisions, and phasing.
 - 2026-05-13 — Cloned from `claude-base-monorepo` template; ran the three-pass rename to `desk-scheduler`. `mvn verify` and `ng build` green on the rename.
